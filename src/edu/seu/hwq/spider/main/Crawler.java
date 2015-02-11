@@ -1,3 +1,5 @@
+package edu.seu.hwq.spider.main;
+import edu.seu.hwq.spider.crawl.BaiduZhidaoPageProcesser;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.scheduler.PriorityScheduler;
 

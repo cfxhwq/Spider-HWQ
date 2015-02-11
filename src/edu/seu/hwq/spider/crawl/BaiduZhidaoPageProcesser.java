@@ -1,3 +1,4 @@
+package edu.seu.hwq.spider.crawl;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.processor.PageProcessor;

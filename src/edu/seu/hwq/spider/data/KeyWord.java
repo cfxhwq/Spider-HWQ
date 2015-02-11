@@ -1,3 +1,4 @@
+package edu.seu.hwq.spider.data;
 import java.util.HashMap;
 
 public class KeyWord {
