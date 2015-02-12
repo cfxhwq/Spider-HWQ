@@ -128,6 +128,7 @@ public class KeyWords {
 					keywords.put("scrollview", "scroller");
 				}
 				keywords.put("gallery", "developer");
+				keywords.put("looper", "developer");
 				keywords.put("handler", "developer");
 				{
 					keywords.put("handleMessage", "handler");
@@ -150,6 +151,7 @@ public class KeyWords {
 				{
 					keywords.put("thread", "java");
 					keywords.put("线程", "java");
+					keywords.put("异步", "java");
 				}
 				keywords.put("jni", "developer");
 				{

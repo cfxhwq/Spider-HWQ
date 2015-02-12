@@ -13,7 +13,7 @@ JNIEXPORT jstring JNICALL Java_edu_seu_hwq_spider_util_Keyword_getKeywordsbyJieb
 	string s(tmp);
 	vector<pair<string, double> > wordweights;
 	vector<string> words;
-	size_t topN = 5;
+	size_t topN = 20;
 	extractor.extract(s, wordweights, topN);
 	//cout<< s << '\n' << wordweights << endl;
 	//extractor.extract(s, words, topN);
