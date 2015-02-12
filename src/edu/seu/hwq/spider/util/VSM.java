@@ -1,7 +1,5 @@
 package edu.seu.hwq.spider.util;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 
 
@@ -44,7 +42,7 @@ public class VSM {
 //		}
 		//System.out.println( System.getProperty("java.library.path"));
 		System.loadLibrary("Keyword");
-		System.out.println(Keyword.getKeywords("ss"));
+		System.out.println(Keyword.getKeywords("我是拖拉机学院手扶拖拉机专业的。不用多久，我就会升职加薪，当上CTO，走上人生巅峰。"));
 //		System.out.println( System.getProperty("java.library.path"));
 	}
 
