@@ -1,5 +1,6 @@
 package edu.seu.hwq.spider.data;
 
+
 public class BaiduZhidaoLayout extends QnALayout {
 
 	public BaiduZhidaoLayout(double weight4Q) {

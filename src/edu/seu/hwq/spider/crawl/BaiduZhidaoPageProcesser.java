@@ -1,25 +1,58 @@
 package edu.seu.hwq.spider.crawl;
 
+import java.util.Iterator;
+import java.util.List;
+
 import edu.seu.hwq.spider.data.BaiduZhidaoLayout;
+import edu.seu.hwq.spider.data.Inherited;
 import edu.seu.hwq.spider.util.VSM;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Page;
+import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.processor.PageProcessor;
 
 public class BaiduZhidaoPageProcesser implements PageProcessor {
+	public static void main(String[] args) {
+		Spider.create(new BaiduZhidaoPageProcesser())
+				.addUrl("http://zhidao.baidu.com/question/1755448004224524868.html")// .thread(6)
+				.start();
+	}
+
+	long id;
 
 	@Override
 	public void process(Page page) {
+		id = Long.valueOf(page.getUrl()
+				.regex("http://zhidao.baidu.com/question/(\\d+).html.*")
+				.toString());
+		System.out.println(id);
+		// get The sub Links
+		List<String> subLinks = page.getHtml()
+				.xpath("//*[@class=\"related-list line\"]/ul/li/a/@href")
+				.regex("http://zhidao.baidu.com/question/\\d+.html.*").all();
+		// System.out.println(subLinks);
 
+		double source = getSource(getSharkSearch(page), getPR());
+		if (source > 0.4) { // go on
+
+			 page.addTargetRequests(subLinks);
+			 List<String> subIds = page.getHtml()
+			 .xpath("//*[@class=\"related-list line\"]/ul/li/a/@href")
+			 .regex("http://zhidao.baidu.com/question/(\\d+).html.*")
+			 .all();
+			 for (Iterator iterator = subIds.iterator(); iterator.hasNext();)
+			 {
+			 long father = Long.valueOf((String) iterator.next());
+			
+			 Inherited.inherited.put(id, father);
+			 }
+		} else
+			return; // stop
 	}
 
-	private double getSource(Page page) {
+	private double getSource(double sum_SS, double sum_PR) {
 		double source;
 		double weight = 0.5;
-
-		double sum_SS = getSharkSearch(page);
-
-		double sum_PR = getPR();
 
 		source = weight * sum_SS + (1 - weight) * sum_PR;
 		return source;
@@ -44,7 +77,8 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		String question = page.getHtml()
 				.xpath("//*[@id=\"wgt-ask\"]/pre/text()").toString();
 		page.putField("title", title);
-		page.putField("question", question);
+		if (question != null)
+			page.putField("question", question);
 
 		String bestAnswner = page.getHtml()
 				.xpath("//*[@class=\"best-text mb-10\"]/text()").toString();
@@ -70,11 +104,17 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		}
 
 		instance.sim4Title = VSM.getSim(title);
-		instance.sim4Question = VSM.getSim(question);
+		if (question != null)
+			instance.sim4Question = VSM.getSim(question);
+		else
+			instance.sim4Question = instance.sim4Title;
 		if (bestAnswner != null) {
 			instance.sim4Answer = VSM.getSim(bestAnswner);
 		} else {
-
+			String tmp = page.getHtml()
+					.xpath("//*[@class=\"answer-text mb-10\"]/text()").all()
+					.toString();
+			instance.sim4Answer = VSM.getSim(tmp);
 		}
 
 		String tag = page.getHtml()
@@ -86,10 +126,19 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 			instance.sim4Tag = VSM.getSim(tag);
 		}
 
+		instance.setSim4Content();
 		double total = instance.getTotalSim(weight4Title, weight4Tag);
 		System.out.println("Source >>>\t" + total);
 
-		return 0;
+		if (total > 0.5) {
+			Inherited.kv.put(id, 0.5 * total);
+			return 0.5 * total;
+		} else if (Inherited.kv.containsKey(Inherited.inherited.get(id))) {
+			Inherited.kv.put(id,
+					0.5 * Inherited.kv.get(Inherited.inherited.get(id)));
+			return 0.5 * 0.5;
+		} else
+			return 0;
 	}
 
 	private double getNeighborhood(String url) {

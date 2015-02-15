@@ -29,11 +29,12 @@ public class VSM {
 			}
 			d_keyword += Math.pow((Double) entry.getValue(), 2);
 		}
+		System.out.println();
 		denominator = Math.sqrt(d_keyword * d_topic);
 		if (denominator == 0)
 			return 0;//denominator can't be 0
 		total = numerator / denominator;
-		System.out.println("\nSim >>>>\t" + total + " = " + numerator + " / "
+		System.out.println("Sim >>>>\t" + total + " = " + numerator + " / "
 				+ denominator);
 		return total;
 	}
