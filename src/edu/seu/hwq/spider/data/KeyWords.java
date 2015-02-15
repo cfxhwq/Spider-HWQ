@@ -17,6 +17,7 @@ public class KeyWords {
 			keywords.put("广播", "android");
 			keywords.put("activity", "android");
 			{
+				keywords.put("mainactivity", "activity");
 				keywords.put("oncreate", "activity");
 				keywords.put("onstart", "activity");
 				keywords.put("onresume", "activity");

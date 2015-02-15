@@ -16,6 +16,7 @@ public class VSM {
 		double total, numerator = 0, denominator = 0;
 		double d_keyword = 0, d_topic = 0;
 		HashMap<String, Double> keyword_value = VSM.getKeywords(content);
+		System.out.print( "Keywords >>>>\t ");
 		for (Iterator<?> iterator = keyword_value.entrySet().iterator(); iterator
 				.hasNext();) {
 			Map.Entry<?, ?> entry = (Map.Entry<?, ?>) iterator.next();
@@ -103,13 +104,14 @@ public class VSM {
 		// .getKeywords("我是拖拉机学院手扶拖拉机专业的。不用多久，我就会升职加薪，当上CTO，走上人生巅峰。"));
 		// System.out.println( System.getProperty("java.library.path"));
 
-		// VSM.getSim("在Handler 异步实现时,涉及到develop, Handler, Looper, Message,Thread四个对象，实现异步的流程是主线程启动Thread（子线程）àthread(子线程)运行并生成Message-àLooper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。");
+		VSM.getSim("在Handler 异步实现时,涉及到develop, Handler, Looper, Message,Thread四个对象，实现异步的流程是主线程启动Thread（子线程）àthread(子线程)运行并生成Message-àLooper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。");
 		/*
 		 * shell get *.so g++ -I/usr/lib/jvm/java-7-sun/include/
 		 * -I/usr/lib/jvm/java-7-sun/include/linux/ -fPIC -shared -o
 		 * ../libKeyword.so jni_Keyword.cpp
 		 */
-		VSM.getSim("xxxxxxxxxxxxxxx  xxxx");
+		//VSM.getSim("xxxxxxxxxxxxxxx  xxxx");
+		
 	}
 
 }

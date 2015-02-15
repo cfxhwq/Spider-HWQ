@@ -12,7 +12,8 @@ public class Crawler {
 		// baiduZhidao.setScheduler(new PriorityScheduler());
 		// baiduZhidao.addPipeline(null);
 		baiduZhidao
-				.addUrl("http://zhidao.baidu.com/question/918752740286781299.html");
+				//.addUrl("http://zhidao.baidu.com/question/918752740286781299.html");
+		.addUrl("http://zhidao.baidu.com/question/513573411.html");
 		baiduZhidao.run();
 
 	}
