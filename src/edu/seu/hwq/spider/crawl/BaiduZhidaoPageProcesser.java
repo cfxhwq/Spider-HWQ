@@ -19,35 +19,45 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 	}
 
 	long id;
+	BaiduZhidaoLayout instance;
 
 	@Override
 	public void process(Page page) {
 		id = Long.valueOf(page.getUrl()
 				.regex("http://zhidao.baidu.com/question/(\\d+).html.*")
 				.toString());
-		System.out.println(id);
+
 		// get The sub Links
 		List<String> subLinks = page.getHtml()
 				.xpath("//*[@class=\"related-list line\"]/ul/li/a/@href")
-				.regex("http://zhidao.baidu.com/question/\\d+.html.*").all();
+				.regex("(http://zhidao.baidu.com/question/\\d+.html).*").all();
 		// System.out.println(subLinks);
 
-		double source = getSource(getSharkSearch(page), getPR());
-		if (source > 0.4) { // go on
+		double inherited = getInherited(page);
+		double PR = getPR();
+		List<String> subAnchors = page.getHtml()
+				.xpath("//*[@class=\"related-list line\"]/ul/li/a/text()")
+				.all();
+		System.out.println(subAnchors);
+		double group_score = getGroupSource(subAnchors);
+		double group_strength = getGroupStrength();
+		for (Iterator iterator = subLinks.iterator(); iterator.hasNext();) {
+			String link = (String) iterator.next();
+			double source = getSource(
+					getSharkSearch(inherited,
+							getNeighborhood(group_score, group_strength)), PR);
+			if (source > 0.4) { // go on
+				page.addTargetRequest(link);
+			}
+		}
 
-			 page.addTargetRequests(subLinks);
-			 List<String> subIds = page.getHtml()
-			 .xpath("//*[@class=\"related-list line\"]/ul/li/a/@href")
-			 .regex("http://zhidao.baidu.com/question/(\\d+).html.*")
-			 .all();
-			 for (Iterator iterator = subIds.iterator(); iterator.hasNext();)
-			 {
-			 long father = Long.valueOf((String) iterator.next());
-			
-			 Inherited.inherited.put(id, father);
-			 }
-		} else
-			return; // stop
+		List<String> subIds = page.getHtml()
+				.xpath("//*[@class=\"related-list line\"]/ul/li/a/@href")
+				.regex("http://zhidao.baidu.com/question/(\\d+).html.*").all();
+		for (Iterator iterator = subIds.iterator(); iterator.hasNext();) {
+			long son = Long.valueOf((String) iterator.next());
+			Inherited.inherited.put(son, id);
+		}
 	}
 
 	private double getSource(double sum_SS, double sum_PR) {
@@ -58,10 +68,9 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		return source;
 	};
 
-	private double getSharkSearch(Page page) {
+	private double getSharkSearch(double inherited, double neighborhood) {
 		double weight = 0.5;
-		double sum = weight * getInherited(page) + (1 - weight)
-				* getNeighborhood(page.getUrl().toString());
+		double sum = weight * inherited + (1 - weight) * neighborhood;
 		return sum;
 	}
 
@@ -69,8 +78,6 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		double weight4Title = 0.5;
 		double weight4Tag = 0;
 		double weight4Question;
-
-		BaiduZhidaoLayout instance;
 
 		String title = page.getHtml()
 				.xpath("//*[@id=\"wgt-ask\"]/h1/span/text()").toString();
@@ -141,8 +148,31 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 			return 0;
 	}
 
-	private double getNeighborhood(String url) {
-		return 0;
+	private double getGroupSource(List<String> anchors) {
+		double group_score = 0;
+		for (Iterator iterator = anchors.iterator(); iterator.hasNext();) {
+			String anchor = (String) iterator.next();
+			group_score += VSM.getSim(anchor);
+		}
+		group_score = group_score / anchors.size();
+		return group_score;
+	}
+
+	private double getGroupStrength() {
+		double group_strength;
+		group_strength = 1 / Math.log(0);
+		return group_strength;
+	}
+
+	private double getNeighborhood(double group_source, double group_strength) {
+		double total, anchor_url;
+		double weight = 0.4;
+
+		anchor_url = instance.sim4Title;
+
+		total = weight * anchor_url + (1 - weight) * group_source
+				* group_strength;
+		return total;
 	}
 
 	private double getPR() {// PageRank Value
