@@ -13,6 +13,7 @@ public class VSM {
 	}
 
 	public static double getSim(String content) {
+		System.out.println(content);
 		double total, numerator = 0, denominator = 0;
 		double d_keyword = 0, d_topic = 0;
 		HashMap<String, Double> keyword_value = VSM.getKeywords(content);
@@ -34,6 +35,7 @@ public class VSM {
 		if (denominator == 0)
 			return 0;//denominator can't be 0
 		total = numerator / denominator;
+
 		System.out.println("Sim >>>>\t" + total + " = " + numerator + " / "
 				+ denominator);
 		return total;

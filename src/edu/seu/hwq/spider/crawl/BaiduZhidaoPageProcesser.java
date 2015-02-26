@@ -9,12 +9,17 @@ import edu.seu.hwq.spider.util.VSM;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
+import us.codecraft.webmagic.scheduler.RedisScheduler;
 
 public class BaiduZhidaoPageProcesser implements PageProcessor {
 	public static void main(String[] args) {
 		Spider.create(new BaiduZhidaoPageProcesser())
-				.addUrl("http://zhidao.baidu.com/question/1755448004224524868.html")// .thread(6)
+				.addUrl("http://zhidao.baidu.com/question/2201619900353671788.html")
+				// .thread(6)
+				.addPipeline(
+						new JsonFilePipeline("/home/mark/WebCrawler_Data/"))
 				.start();
 	}
 
@@ -23,6 +28,11 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 
 	@Override
 	public void process(Page page) {
+		// System.out.println(page.getUrl());
+		if (page.getHtml() == null || page.getHtml().toString().isEmpty()) {
+			page.addTargetRequest(page.getUrl().toString());
+			return;
+		}
 		id = Long.valueOf(page.getUrl()
 				.regex("http://zhidao.baidu.com/question/(\\d+).html.*")
 				.toString());
@@ -36,18 +46,25 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		double inherited = getInherited(page);
 		double PR = getPR();
 		List<String> subAnchors = page.getHtml()
-				.xpath("//*[@class=\"related-list line\"]/ul/li/a/text()")
+				.xpath("//*[@class=\"related-list line\"]/ul/li/a/allText()")
 				.all();
-		System.out.println(subAnchors);
 		double group_score = getGroupSource(subAnchors);
 		double group_strength = getGroupStrength();
 		for (Iterator iterator = subLinks.iterator(); iterator.hasNext();) {
 			String link = (String) iterator.next();
-			double source = getSource(
-					getSharkSearch(inherited,
-							getNeighborhood(group_score, group_strength)), PR);
-			if (source > 0.4) { // go on
+			double SS = getSharkSearch(inherited,
+					getNeighborhood(group_score, group_strength));
+			double source = getSource(SS, PR);
+			page.putField("SS", SS);
+			page.putField("PR", PR);
+			page.putField("source", source);
+			if (SS > 0.2) { // go
+							// on//------------------------------------------------------>>>>>>>>>>>>>>need
+							// to change back, use source
 				page.addTargetRequest(link);
+				// long son =
+				// Long.valueOf(link.substring(33).substring(0,link.substring(33).indexOf('.')));
+				// Inherited.inherited.put(son, id);
 			}
 		}
 
@@ -71,6 +88,7 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 	private double getSharkSearch(double inherited, double neighborhood) {
 		double weight = 0.5;
 		double sum = weight * inherited + (1 - weight) * neighborhood;
+		System.out.println("in" + inherited + "ne" + neighborhood);
 		return sum;
 	}
 
@@ -80,22 +98,22 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		double weight4Question;
 
 		String title = page.getHtml()
-				.xpath("//*[@id=\"wgt-ask\"]/h1/span/text()").toString();
+				.xpath("//*[@id=\"wgt-ask\"]/h1/span/allText()").toString();
 		String question = page.getHtml()
-				.xpath("//*[@id=\"wgt-ask\"]/pre/text()").toString();
+				.xpath("//*[@id=\"wgt-ask\"]/pre/allText()").toString();
 		page.putField("title", title);
 		if (question != null)
 			page.putField("question", question);
 
 		String bestAnswner = page.getHtml()
-				.xpath("//*[@class=\"best-text mb-10\"]/text()").toString();
+				.xpath("//*[@class=\"best-text mb-10\"]/allText()").toString();
 		if (bestAnswner == null) {
 			bestAnswner = page.getHtml()
-					.xpath("//*[@class=\"recommend-text mb-10\"]/text()")
+					.xpath("//*[@class=\"recommend-text mb-10\"]/allText()")
 					.toString();
 		} else {
 			String tmp = page.getHtml()
-					.xpath("//*[@class=\"recommend-text mb-10\"]/text()")
+					.xpath("//*[@class=\"recommend-text mb-10\"]/allText()")
 					.toString();
 			if (tmp != null) {
 				bestAnswner = "#BestAnswner1:\n" + bestAnswner
@@ -109,23 +127,25 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 		} else {
 			instance = new BaiduZhidaoLayout(weight4Question = 0.7);
 		}
-
+		System.out.println("Title>>");
 		instance.sim4Title = VSM.getSim(title);
+		System.out.println("Question>>");
 		if (question != null)
 			instance.sim4Question = VSM.getSim(question);
 		else
 			instance.sim4Question = instance.sim4Title;
+		System.out.println("BestAnswner>>");
 		if (bestAnswner != null) {
 			instance.sim4Answer = VSM.getSim(bestAnswner);
 		} else {
 			String tmp = page.getHtml()
-					.xpath("//*[@class=\"answer-text mb-10\"]/text()").all()
+					.xpath("//*[@class=\"answer-text mb-10\"]/allText()").all()
 					.toString();
 			instance.sim4Answer = VSM.getSim(tmp);
 		}
 
 		String tag = page.getHtml()
-				.xpath("//*[@id=\"ask-info\"]/span[3]/a/text()").toString();
+				.xpath("//*[@id=\"ask-info\"]/span[3]/a/allText()").toString();
 		if (tag != null) {
 			page.putField("tag", tag);
 			weight4Title = 0.3;
@@ -135,15 +155,17 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 
 		instance.setSim4Content();
 		double total = instance.getTotalSim(weight4Title, weight4Tag);
-		System.out.println("Source >>>\t" + total);
+		System.out.println("Source >>>\t" + total + "=Title"
+				+ instance.sim4Title + "+Tag" + instance.sim4Tag + "+Content"
+				+ instance.sim4Content);
 
-		if (total > 0.5) {
+		if (total > 0.3) {
 			Inherited.kv.put(id, 0.5 * total);
 			return 0.5 * total;
 		} else if (Inherited.kv.containsKey(Inherited.inherited.get(id))) {
 			Inherited.kv.put(id,
 					0.5 * Inherited.kv.get(Inherited.inherited.get(id)));
-			return 0.5 * 0.5;
+			return Inherited.kv.get(Inherited.inherited.get(id));
 		} else
 			return 0;
 	}
@@ -177,7 +199,7 @@ public class BaiduZhidaoPageProcesser implements PageProcessor {
 
 	private double getPR() {// PageRank Value
 
-		return 0;
+		return 1;
 	}
 
 	@Override
